@@ -162,9 +162,9 @@ class Handler(object):
         # Notify if interval ended
         if time_string == '00:00':
             if self.timer.is_work:
-                msg = 'Get back to work'
-            else:
                 msg = 'Time to relax'
+            else:
+                msg = 'Get back to work'
 
             Notify.Notification.new('Pomodoro', msg, ICON).show()
 
