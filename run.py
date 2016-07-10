@@ -183,7 +183,8 @@ class App(object):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         builder = Gtk.Builder()
-        builder.add_from_file('ui.glade')
+        ui_file = os.path.join(CURRDIR, 'ui.glade')
+        builder.add_from_file(ui_file)
         builder.connect_signals(Handler(builder))
 
         menu = builder.get_object('menu_file')
