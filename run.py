@@ -41,6 +41,12 @@ class Timer(object):
         self.long_break = {'min': int(long_break), 'sec': 0}
         self.num_of_intervals = int(num_of_intervals)
 
+        # TODO: Remove after testing.
+        # self.work = {'min': 0, 'sec': 5}
+        # self.short_break = {'min': 0, 'sec': 2}
+        # self.long_break = {'min': 0, 'sec': 3}
+        # self.num_of_intervals = 5
+
         self.value = self.work.copy()
         self.round = 1
         self.is_work = True
@@ -110,15 +116,19 @@ class Handler(object):
 
 
     def on_start(self, button):
-        """Start timer"""
+        """Start/resume timer"""
 
-        # Init timer
-        self.timer = Timer(
-            self.input_work.get_text(),
-            self.input_work.get_text(),
-            self.input_short_break.get_text(),
-            self.input_num_of_intervals.get_text()
-        )
+        # Just resume if paused
+        if self.is_paused:
+            self.is_paused = False
+        # Init new timer
+        else:
+            self.timer = Timer(
+                self.input_work.get_text(),
+                self.input_work.get_text(),
+                self.input_short_break.get_text(),
+                self.input_num_of_intervals.get_text()
+            )
 
         self.in_progress = True
         # Repeat every second while timer_tick() returns True
@@ -126,12 +136,8 @@ class Handler(object):
 
 
     def on_pause(self, button):
-        """Pause/resume timer"""
-
-        if self.in_progress:
-            self.is_paused = not self.is_paused
-            if not self.is_paused:
-                GLib.timeout_add_seconds(1, self.timer_tick)
+        """Pause timer"""
+        self.is_paused = True
 
 
     def on_stop(self, button):

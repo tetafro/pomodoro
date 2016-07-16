@@ -280,7 +280,7 @@
             <child>
               <object class="GtkButton" id="btn_start">
                 <property name="label" translatable="yes">▶</property>
-                <property name="width_request">66</property>
+                <property name="width_request">50</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -296,8 +296,8 @@
             </child>
             <child>
               <object class="GtkButton" id="btn_pause">
-                <property name="label" translatable="yes">▮▮|▶</property>
-                <property name="width_request">66</property>
+                <property name="label" translatable="yes">▮▮</property>
+                <property name="width_request">50</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -313,7 +313,7 @@
             <child>
               <object class="GtkButton" id="btn_stop">
                 <property name="label" translatable="yes">◼</property>
-                <property name="width_request">66</property>
+                <property name="width_request">50</property>
                 <property name="height_request">30</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
