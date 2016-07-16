@@ -23,6 +23,7 @@ class TrayIcon:
         self.ind = Gtk.StatusIcon()
         self.ind.set_from_file(icon)
         self.ind.connect('popup-menu', self.on_popup_menu)
+        self.ind.set_tooltip_text('Pomodoro')
 
     def on_popup_menu(self, icon, button, time):
         self.menu.popup(None, None, Gtk.StatusIcon.position_menu,
@@ -91,8 +92,9 @@ class Timer(object):
 
 
 class Handler(object):
-    def __init__(self, builder):
+    def __init__(self, builder, tray_icon):
         self.builder = builder
+        self.tray_icon = tray_icon
 
         # Inputs
         self.input_work = self.builder.get_object('input_work')
@@ -129,6 +131,9 @@ class Handler(object):
                 self.input_short_break.get_text(),
                 self.input_num_of_intervals.get_text()
             )
+            self.tray_icon.set_tooltip_text(
+                'Work: ' + self.input_work.get_text() + ':00'
+            )
 
         self.in_progress = True
         # Repeat every second while timer_tick() returns True
@@ -137,12 +142,14 @@ class Handler(object):
 
     def on_pause(self, button):
         """Pause timer"""
-        self.is_paused = True
+        if self.in_progress:
+            self.is_paused = True
 
 
     def on_stop(self, button):
         """Stop (reset) timer"""
         self.label_timer.set_text('00:00')
+        self.tray_icon.set_tooltip_text('Pomodoro')
         self.in_progress = False
         self.is_paused = False
 
@@ -174,6 +181,10 @@ class Handler(object):
 
             Notify.Notification.new('Pomodoro', msg, ICON).show()
 
+        # Update tray icon tooltip
+        tray_text = 'Work: ' if self.timer.is_work else 'Break: '
+        self.tray_icon.set_tooltip_text(tray_text+time_string)
+
         self.label_timer.set_text(time_string)
         return True  # continue Glib timeout
 
@@ -191,10 +202,11 @@ class App(object):
         builder = Gtk.Builder()
         ui_file = os.path.join(CURRDIR, 'ui.glade')
         builder.add_from_file(ui_file)
-        builder.connect_signals(Handler(builder))
 
         menu = builder.get_object('menu_file')
-        TrayIcon(APPID, ICON, menu)
+        tray_icon = TrayIcon(APPID, ICON, menu)
+
+        builder.connect_signals(Handler(builder, tray_icon.ind))
 
         Notify.init(APPID)
 
