@@ -8,7 +8,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
 
-from gi.repository import Gtk, GLib, Wnck
+from gi.repository import Gtk, GLib
 from gi.repository import Notify
 
 
@@ -43,9 +43,9 @@ class Timer(object):
         self.num_of_intervals = int(num_of_intervals)
 
         # TODO: Remove after testing.
-        # self.work = {'min': 0, 'sec': 5}
-        # self.short_break = {'min': 0, 'sec': 2}
-        # self.long_break = {'min': 0, 'sec': 3}
+        # self.work = {'min': 0, 'sec': 2}
+        # self.short_break = {'min': 0, 'sec': 1}
+        # self.long_break = {'min': 0, 'sec': 1}
         # self.num_of_intervals = 5
 
         self.value = self.work.copy()
@@ -96,6 +96,10 @@ class Handler(object):
         self.builder = builder
         self.tray_icon = tray_icon
 
+        # Main window
+        self.window = self.builder.get_object('main_window')
+        self.window.connect('notify::is-active', self.is_active_changed)
+
         # Inputs
         self.input_work = self.builder.get_object('input_work')
         self.input_short_break = self.builder.get_object('input_short_break')
@@ -117,8 +121,16 @@ class Handler(object):
         self.about = self.builder.get_object('dialog_about')
 
 
+    def is_active_changed(self, window, param):
+        """Remove urgency hint. Otherwise it won't work."""
+        if window.props.is_active:
+            self.window.set_urgency_hint(False)
+
+
     def on_start(self, button):
         """Start/resume timer"""
+
+        work_time = self.input_work.get_text()
 
         # Just resume if paused
         if self.is_paused:
@@ -126,16 +138,18 @@ class Handler(object):
         # Init new timer
         else:
             self.timer = Timer(
-                self.input_work.get_text(),
+                work_time,
                 self.input_short_break.get_text(),
                 self.input_long_break.get_text(),
                 self.input_num_of_intervals.get_text()
             )
             self.tray_icon.set_tooltip_text(
-                'Work: ' + self.input_work.get_text() + ':00'
+                'Work: ' + work_time + ':00'
             )
 
         self.in_progress = True
+        self.label_timer.set_text(work_time+':00')
+
         # Repeat every second while timer_tick() returns True
         GLib.timeout_add_seconds(1, self.timer_tick)
 
@@ -180,8 +194,7 @@ class Handler(object):
                 msg = 'Get back to work'
 
             # Highlight window in panel
-            window = self.builder.get_object('main_window')
-            window.set_urgency_hint(True)
+            self.window.set_urgency_hint(True)
 
             Notify.Notification.new('Pomodoro', msg, ICON).show()
 
