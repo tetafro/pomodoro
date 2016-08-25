@@ -8,7 +8,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Notify', '0.7')
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Wnck
 from gi.repository import Notify
 
 
@@ -127,8 +127,8 @@ class Handler(object):
         else:
             self.timer = Timer(
                 self.input_work.get_text(),
-                self.input_work.get_text(),
                 self.input_short_break.get_text(),
+                self.input_long_break.get_text(),
                 self.input_num_of_intervals.get_text()
             )
             self.tray_icon.set_tooltip_text(
@@ -178,6 +178,10 @@ class Handler(object):
                 msg = 'Time to relax'
             else:
                 msg = 'Get back to work'
+
+            # Highlight window in panel
+            window = self.builder.get_object('main_window')
+            window.set_urgency_hint(True)
 
             Notify.Notification.new('Pomodoro', msg, ICON).show()
 
