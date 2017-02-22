@@ -1,15 +1,31 @@
 #!/usr/bin/python3
 
-import signal
 import os
+import signal
 import time
+import sys
 
 import gi
-gi.require_version('Gtk', '3.0')
-gi.require_version('Notify', '0.7')
 
-from gi.repository import Gtk, GLib
-from gi.repository import Notify
+try:
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('Notify', '0.7')
+except:
+    print('ERROR: Gtk 3.0 and Notify 0.7 are required')
+    sys.exit(1)
+else:
+    from gi.repository import Gtk, GLib, Notify
+
+# Tray icon
+try:
+    gi.require_version('AppIndicator3', '0.1')
+# For Gnome 3
+except:
+    APPIND_SUPPORT = False
+# For Ubuntu Unity
+else:
+    from gi.repository import AppIndicator3
+    APPIND_SUPPORT = True
 
 
 APPID = 'Pomodoro'
@@ -20,12 +36,21 @@ ICON = os.path.join(CURRDIR, 'icon.png')
 class TrayIcon:
     def __init__(self, appid, icon, menu):
         self.menu = menu
-        self.ind = Gtk.StatusIcon()
-        self.ind.set_from_file(icon)
-        self.ind.connect('popup-menu', self.on_popup_menu)
-        self.ind.set_tooltip_text('Pomodoro')
 
-    def on_popup_menu(self, icon, button, time):
+        if APPIND_SUPPORT:
+            self.ind = AppIndicator3.Indicator.new(
+                appid, icon,
+                AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            )
+            self.ind.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+            self.ind.set_menu(self.menu)
+        else:
+            self.ind = Gtk.StatusIcon()
+            self.ind.set_from_file(icon)
+            self.ind.connect('popup-menu', self.onPopupMenu)
+            self.ind.set_tooltip_text('Pomodoro')
+
+    def onPopupMenu(self, icon, button, time):
         self.menu.popup(None, None, Gtk.StatusIcon.position_menu,
                         icon, button, time)
 
@@ -42,7 +67,7 @@ class Timer(object):
         self.long_break = {'min': int(long_break), 'sec': 0}
         self.num_of_intervals = int(num_of_intervals)
 
-        # TODO: Remove after testing.
+        # DEBUG
         # self.work = {'min': 0, 'sec': 2}
         # self.short_break = {'min': 0, 'sec': 1}
         # self.long_break = {'min': 0, 'sec': 1}
@@ -143,9 +168,11 @@ class Handler(object):
                 self.input_long_break.get_text(),
                 self.input_num_of_intervals.get_text()
             )
-            self.tray_icon.set_tooltip_text(
-                'Work: ' + work_time + ':00'
-            )
+            # Ubuntu tray does not have tooltip text
+            if not APPIND_SUPPORT:
+                self.tray_icon.set_tooltip_text(
+                    'Work: ' + work_time + ':00'
+                )
 
         self.in_progress = True
         self.label_timer.set_text(work_time+':00')
@@ -163,7 +190,9 @@ class Handler(object):
     def on_stop(self, button):
         """Stop (reset) timer"""
         self.label_timer.set_text('00:00')
-        self.tray_icon.set_tooltip_text('Pomodoro')
+        # Ubuntu tray does not have tooltip text
+        if not APPIND_SUPPORT:
+            self.tray_icon.set_tooltip_text('Pomodoro')
         self.in_progress = False
         self.is_paused = False
 
@@ -199,8 +228,9 @@ class Handler(object):
             Notify.Notification.new('Pomodoro', msg, ICON).show()
 
         # Update tray icon tooltip
-        tray_text = 'Work: ' if self.timer.is_work else 'Break: '
-        self.tray_icon.set_tooltip_text(tray_text+time_string)
+        if not APPIND_SUPPORT:
+            tray_text = 'Work: ' if self.timer.is_work else 'Break: '
+            self.tray_icon.set_tooltip_text(tray_text+time_string)
 
         self.label_timer.set_text(time_string)
         return True  # continue Glib timeout
