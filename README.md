@@ -2,6 +2,8 @@ Description
 ===========
 Pomodoro timer.
 
+![screenshot](/screenshot.png)
+
 Requirements
 ============
 * Python (3.4.2)
